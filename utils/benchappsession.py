@@ -143,10 +143,13 @@ class BenchappSession:
     def process_date(self, raw_date_string):
         #Assume date is in the future. Test if current year or current year+1
         date_without_year = datetime.strptime(raw_date_string, "%A, %b %d")
-        today = datetime.now()
+        dt = date.today()
+        today = datetime.combine(dt, datetime.min.time())
         current_year = today.year
         date_with_current_year = date_without_year.replace(year=int(current_year))
         clean_date_string = date_with_current_year.strftime('%Y%m%d')
+        print(date_with_current_year)
+        print(today)
         if date_with_current_year<today:
             if self.debug:
                 print("Date occurs in the past, assume next year")
