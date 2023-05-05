@@ -9,50 +9,39 @@ from datetime import datetime, date
 import os
 from urllib.parse import urlparse  
 import csv
-import yaml
-import io
+#import io
 
 class BenchappSession:
     def __init__(self,
+                 email=None,
+                 password=None,
+                 sessionFile='ba_session.dat',
                  maxSessionTimeSeconds = 60 * 30,
-                 config = "config.yml",
-                 **kwargs):
-
-        self.config_filename = config
+                 agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
+                 default_team = "",
+                 debug = False):
+        self.email = email
+        self.password = password
         self.loginUrl = "https://www.benchapp.com/player-area/ajax/login.php"
-        urlData = urlparse(self.loginUrl)
         self.loginTestUrl = "https://www.benchapp.com/player/dashboard"
         self.baseUrl = "https://www.benchapp.com"
-        self.maxSessionTime = maxSessionTimeSeconds
-        self.forceLogin = False    
-        self.sessionFile = urlData.netloc + '_session.dat'
-        self.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+        self.maxSessionTime = maxSessionTimeSeconds  
+        self.sessionFile = sessionFile
+        self.userAgent = agent
         self.loginTestString = "Logout"
-        self.debug = self.load_config()["debug"]
-        self.myTeams = self.load_config()["ba_teams"]
+        self.debug = debug
+        self.myTeams = {}
+        self.default_team = default_team
+        if email is None or password is None or email=="" or password=="":
+            raise CredentialError('You must specify either a username/password '
+                'combination or "useNetrc" must be either True or a string '
+                'representing a path to a netrc file')
+        self.connected = self.login()
+        if self.connected:
+            self.load_teams()
         if self.debug:
             print("Team count: %s"%len(self.myTeams))
-        self.loginData = self.load_config()["ba_login"]
-        self.default_team = self.load_config()["ba_default_team"]
-        self.login(self.forceLogin, **kwargs)
-        if len(self.myTeams)<1:
-            self.get_all_teams()
-        
-    def load_config(self):
-        config = None
-        with open(self.config_filename, "r") as stream:
-            try:
-                config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-        return config
 
-    def update_config(self, key, value):
-        temp_config = self.load_config()
-        temp_config[key] = value
-        with open(config_filename,'w') as yamlfile:
-             yaml.safe_dump(temp_config, yamlfile)
-             
     def modification_date(self, filename):
         t = os.path.getmtime(filename)
         return datetime.fromtimestamp(t)
@@ -63,7 +52,6 @@ class BenchappSession:
             print('loading or generating session...')
         if os.path.exists(self.sessionFile) and not forceLogin:
             time = self.modification_date(self.sessionFile)         
-            # only load if file less than x minutes old
             lastModification = (datetime.now() - time).seconds
             if lastModification < self.maxSessionTime:
                 with open(self.sessionFile, "rb") as f:
@@ -74,20 +62,37 @@ class BenchappSession:
         if not wasReadFromCache:
             self.session = requests.Session()
             self.session.headers.update({'user-agent' : self.userAgent})
-            res = self.session.post(self.loginUrl, data = self.loginData, **kwargs)
-
+            self.loginData = dict(email=self.email, password=self.password)
+            print(self.loginData)
+            res = self.session.post(self.loginUrl, data = self.loginData)
             if self.debug:
                 print('created new session with login %s'%res )
-                #print(res.text)
             self.saveSessionToCache()
-        # test login
+
         res = self.session.get(self.loginTestUrl)
         if self.debug:print(res)
         #print(res.text)
         if res.text.lower().find(self.loginTestString.lower()) < 0:
-            raise Exception("could not log into provided site '%s'"
-                            " (did not find successful login string)"
-                            % self.loginUrl)
+            print("could not log into provided site %s"% self.loginUrl)
+            return False
+        else:
+            self.saveSessionToCache()
+            return True
+    
+    def get_teams(self):
+        return self.myTeams
+    
+    def get_default_team(self):
+        return self.default_team
+        
+    def set_default_team(self, team_name):
+        if team_name in self.myTeams.keys():
+            return True
+        else:
+            return False    
+    
+    def check_connected(self):
+        return self.connected      
 
     def saveSessionToCache(self):
         with open(self.sessionFile, "wb") as f:
@@ -103,27 +108,26 @@ class BenchappSession:
         self.saveSessionToCache()            
         return res
 
-    def get_team_link(self, team):
+    def load_team_link(self, team):
         team.small.extract()
         team_name = team.find("a", href=True).text.strip()
         team_url = team.find("a", href=True)["href"]
         self.myTeams[team_name] = team_url.split("/")[-1]
                 
-    def get_all_teams(self):
+    def load_teams(self):
         if self.debug:
             print("Reloading team list")
         res = self.retrieveContent(self.loginTestUrl)
         soup = BeautifulSoup(res.text, "html.parser")    
         all_other_teams = soup.find_all("li", "team")
         for team in all_other_teams:
-            self.get_team_link(team)
+            self.load_team_link(team)
         next_team = [elem for elem in self.myTeams.values()][0]
         res = self.retrieveContent("%s/switch/team/%s"%(self.baseUrl, next_team))
         soup = BeautifulSoup(res.text, "html.parser")    
         all_other_teams = soup.find_all("li", "team")
         for team in all_other_teams:
-            self.get_team_link(team)
-        self.update_config("ba_teams", self.myTeams)
+            self.load_team_link(team)
         
     def is_match(self, event_soup):
         game_tag = event_soup.find("div", {"class": "opponents"})
@@ -185,6 +189,7 @@ class BenchappSession:
             for row in rows:
                 filewriter.writerow(row)
             csvfile.close()
+        return rows
     
     def get_next_game_att(self, team):
         res = self.retrieveContent("%s/switch/team/%s"%(self.baseUrl, self.myTeams[team])) #switch to default team
@@ -196,7 +201,7 @@ class BenchappSession:
             f.close()
         #print(soup)
         if self.is_match(event_soup):
-            self.process_match(event_soup, team)
+            return self.process_match(event_soup, team)
             
     def select_default_team(self):
         team_options = []
@@ -212,7 +217,8 @@ class BenchappSession:
             user_input = input(input_message)
         print('You picked: ' + team_options[int(user_input) - 1])
         self.default_team = team_options[int(user_input) - 1]
-        self.update_config("ba_default_team", self.default_team)
+        #self.update_config("ba_default_team", self.default_team)
+        return self.default_team
         
     def is_valid_team(self, team_name):
         if team_name in self.myTeams:
@@ -221,12 +227,3 @@ class BenchappSession:
         else:
             print("Team not found")
             return False
-   
-def main():
-    s = BenchappSession()
-    s.select_default_team()
-    for team in s.myTeams:
-        s.get_next_game_att(team)
-             
-if __name__ == "__main__":
-    main()

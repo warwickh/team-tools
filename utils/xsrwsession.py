@@ -7,21 +7,20 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-import yaml
 
 class XSRWSession:
     def __init__(self,
-                 config = "config.yml",
-                 **kwargs):
-                 
-        self.config_filename = config
-        self.loginData = self.load_config()["xs_login"]
-        self.username = self.loginData["username"]
-        self.password = self.loginData["password"]
+                 username=None,
+                 password=None,
+                 headless=False,
+                 debug = False):
+        self.username = username
+        self.password = password         
         self.loginUrl = "https://icehq.hockeysyte.com/#"
-        self.debug = self.load_config()["debug"]
+        self.debug = debug
+        self.headless = headless
         options = webdriver.ChromeOptions()
-        if self.load_config()["xs_headless"]:
+        if self.headless:
             options.add_argument("--headless=new")
         self.driver = webdriver.Chrome(options=options)
         #self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -39,18 +38,3 @@ class XSRWSession:
         login_submit = self.driver.find_element(By.XPATH, '//*[@id="login_form"]/div[2]/div[1]/button')
         login_submit.click()
     
-    def load_config(self):
-        config = None
-        with open(self.config_filename, "r") as stream:
-            try:
-                config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-        return config 
-
-def main():
-    s = XSRWSession()
-    s.driver.get("https://icehq.hockeysyte.com/")
-
-if __name__ == "__main__":
-    main()
