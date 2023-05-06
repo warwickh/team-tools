@@ -69,22 +69,8 @@ class XSRWSession:
             print("Returning date %s"%clean_date_string)
         return clean_date_string   
         
-    def get_scheduled_matches(self):
-        rows = []
-        self.driver.get(self.loginUrl)
+    def check_in_for_match(self, match_code):
+        matchup_url = "%smatchup/%s"%(self.baseUrl, match_code)
+        self.driver.get(matchup_url)
         self.driver.implicitly_wait(1)
-        team_urls = self.driver.find_elements(By.XPATH, "/html/body/div[1]/div/div[2]/div[4]/div/div/div/div[2]/div[1]/div/a")
-        scheduled_matches = self.driver.find_elements(By.XPATH, '/html/body/div[1]/div/div[2]/div[3]/div/div/div/div/div')
-        for scheduled_match in scheduled_matches:
-            try:
-                game_code = scheduled_match.find_element(By.TAG_NAME, 'a').get_attribute("href").split("/")[-1]
-                if game_code=="4795":
-                    home_team = scheduled_match.find_elements(By.CLASS_NAME, "scroller__team")[0].text
-                    away_team = scheduled_match.find_elements(By.CLASS_NAME, "scroller__team")[1].text
-                    season_name = scheduled_match.find_elements(By.TAG_NAME, 'h4')[0].text.split("-")[0].strip()
-                    match_date =  self.process_date(scheduled_match.find_elements(By.TAG_NAME, 'h4')[1].text.strip())
-                    row = [game_code, home_team, away_team, season_name, match_date]
-                    rows.append(row)
-            except:
-                pass
-        return rows
+        

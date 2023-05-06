@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import csv
 import yaml
 import io
-from utils import benchappsession, xsrwsession
+from utils import benchappsession, xsrwsession, xsrosession
 
 def load_config(config_filename):
     config = None
@@ -60,16 +60,32 @@ def process_xs(config):
         ba_away_team_name = "%s %s"%(scheduled_match[2],pool_name)
         print("%s V %s"%(ba_home_team_name, ba_away_team_name))
         
-
+def process_xsro(config):
+    xs_username = config["xs_login"]["username"]
+    xs_password = config["xs_login"]["password"]
+    xs_default_team = config["xs_default_team"]
+    xs_teams = config["xs_teams"]
+    xs_team_code = xs_teams[xs_default_team]
+    xs_seasons =  config["xs_seasons"]
+    xs_default_season = config["xs_default_season"]
+    xs_season_code = xs_seasons[xs_default_season]
+    print(xs_season_code, xs_team_code)
+    xs = xsrosession.XSROSession(xs_username, xs_password, login=False, debug=True)
+    print("From name: %s"%xs.get_season_code("POOL B3"))
+    print("From name: %s"%xs.get_team_code("POOL B3", "Hat Trick Swayzes"))
+    print("Codes from name: %s"%xs.get_codes("POOL B3", "Hat Trick Swayzes"))
+    
+    schedule = xs.load_season_schedule(113, 818)
+    print(schedule)
+    
 def main():
     config_filename = 'config.yml'
     config = load_config(config_filename)
-    process_ba(config)
-    process_xs(config)
+    #process_ba(config)
+    #process_xs(config)
+    process_xsro(config)
     #while(True):
     #    pass  
-
-    
              
 if __name__ == "__main__":
     main()
