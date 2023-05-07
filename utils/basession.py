@@ -161,7 +161,7 @@ class BenchappSession:
         
     def process_match(self, event_soup, team):    
         rows = []
-        file_headers = ["Team","Date","Name", "Number", "Position", "Check-In"]
+        file_headers = ["HomeTeam","AwayTeam", "Date","Name", "Number", "Position", "Check-In"]
         home_team = event_soup.find("div", {"class": "opponents"}).find("div", {"class": "home"}).find("div", {"class": "name"})
         away_team = event_soup.find("div", {"class": "opponents"}).find("div", {"class": "away"}).find("div", {"class": "name"})
         match_date = event_soup.find("div", {"class": "whenWhere"}).find("div", {"class": "date"}) 
@@ -183,7 +183,7 @@ class BenchappSession:
                 player_number = player.find("span", {"class": "playerNumber"}).text
             except:
                 player_number = ""
-            row = [team, clean_match_date, player_name, player_number, player_position, check_in_status]
+            row = [home_team.text.strip(), away_team.text.strip(), clean_match_date, player_name, player_number, player_position, check_in_status]
             print(row)
             rows.append(row)
         

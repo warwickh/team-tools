@@ -90,14 +90,33 @@ def get_match_schedule(config, season_name, team_name):
     schedule = xs.load_season_schedule(codes[0][season_name],codes[1][team_name])
     print(schedule)
     return schedule
-    
-    
+
+def get_next_game_checkins(config, ba_team_name):
+    ba_email = config["ba_login"]["email"]
+    ba_password = config["ba_login"]["password"]
+    ba = basession.BenchappSession(ba_email, ba_password)
+    checkins = ba.get_next_game_att(ba_team_name)
+    return checkins
+
 def main():
     config_filename = 'config.yml'
     config = load_config(config_filename)
     match_schedule = get_match_schedule(config, "B3", "Hat Trick Swayzes")
+    next
+    input_date = "20230507"
+    dates = []
     for row in match_schedule:
-        print(row[4])
+        dates.append(row[4])
+    results = [d for d in sorted(dates) if d > input_date]
+    next_match_date = results[0] if results else None 
+    print("Next match: %s"%next_match_date)
+    for row in match_schedule:
+        if row[4] == next_match_date:
+            next_match_schedule = row
+            break
+    print(next_match_schedule)
+    ba_team_name = "Hat Trick Swayzes B3"
+    checkins = get_next_game_checkins(config, ba_team_name)
     #ba = process_ba(config)
     #xsrw = process_xs(config)
     #xsro = process_xsro(config)
@@ -108,5 +127,5 @@ def main():
              
 if __name__ == "__main__":
     main()
-    while(True):
-        pass  
+    #while(True):
+    #    pass  
