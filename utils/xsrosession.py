@@ -56,7 +56,8 @@ class XSROSession:
 
     def process_date(self, raw_date_string, year):
         clean_date_string = datetime.strptime(raw_date_string, "%a . %b %d")
-        clean_date_string = clean_date_string.replace(year=int(year)).strftime('%d/%m/%Y')
+        #clean_date_string = clean_date_string.replace(year=int(year)).strftime('%d/%m/%Y')
+        clean_date_string = clean_date_string.replace(year=int(year)).strftime('%Y%m%d')
         return clean_date_string
 
     def process_time(self, raw_time_string):
@@ -92,7 +93,7 @@ class XSROSession:
     def get_year_from_season(self, season_string):
         return season_string.split(" ")[-1]
 
-    def get_team_code(self, team_name):
+    def get_team_code(self, season_name, team_name):
         team_code = None
         page_soup = self.get_page_soup(self.baseUrl)
         seasons = self.get_seasons(page_soup)
@@ -112,31 +113,19 @@ class XSROSession:
                 season_code = season['href'].split("/")[-1]
         return season_code
 
-    def get_codes(self,season_name, team_name):
-        team_code = None
-        season_code = None
-        season_code = self.get_season_code(season_name)
-        season_url = "%sseason/%s"%(self.baseUrl, season_code)
+    def get_codes(self, season_name, team_name):
+        team_code = {}
+        season_code = {}
+        season_code[season_name] = self.get_season_code(season_name)
+        season_url = "%sseason/%s"%(self.baseUrl, season_code[season_name])
         page_soup = self.get_page_soup(season_url)
         teams = self.get_teams(page_soup)
         for team in teams:
             #print("%s %s"%(team.text.strip(), team_name))
             if team_name.lower() in team.text.strip().lower():
-                team_code = team['href'].split("/")[-1]
+                team_code[team_name] = team['href'].split("/")[-1]
         return [season_code, team_code]
-        
-    def get_team_code(self,season_name, team_name):
-        team_code = None
-        season_code = self.get_season_code(season_name)
-        season_url = "%sseason/%s"%(self.baseUrl, season_code)
-        page_soup = self.get_page_soup(season_url)
-        teams = self.get_teams(page_soup)
-        for team in teams:
-            #print("%s %s"%(team.text.strip(), team_name))
-            if team_name.lower() in team.text.strip().lower():
-                team_code = team['href'].split("/")[-1]
-        return team_code
-        
+                
     def select_season(self):
         season_options = []
         season_paths = []
