@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+This script will query the hockeysyte page for your team and retrieve the season schedule.
+The next upcoming match will be determined and you will have the option to confirm this date.
+Once confirmed, the check in details will be extracted from the Benchapp page for your team and loaded into hockeysyte for the upcoming match. 
+In order to process check ins, the invitations must have been sent previously. There is a function for sending invitations for the match also.
 
 """
 import requests 
@@ -70,7 +74,6 @@ def process_match(config, team_div, team_name, next_match_schedule):
     else:
         print("Invites not sent for match %s on %s. Please send before checking in"%(match_code, xs_match_date))
         #xsrw.send_invites_for_match(match_code)
-
     
 def main():
     team_div = "B3"
