@@ -35,11 +35,12 @@ def update_config(config_filename, key, value):
 def get_match_schedule(config, season_name, team_name):
     xs_username = config["xs_login"]["username"]
     xs_password = config["xs_login"]["password"]
-    xs = xsrosession.XSROSession(xs_username, xs_password, login=False, debug=True)
+    xs = xsrosession.XSROSession(xs_username, xs_password, login=False, debug=False)
     codes = xs.get_codes(season_name, team_name)
     print(codes)
     schedule = xs.load_season_schedule(codes[0][season_name],codes[1][team_name])
-    print(schedule)
+    xs.create_ba_schedule_upload(codes[0][season_name],codes[1][team_name]) #Create BA Upload file
+    #print(schedule)
     return schedule
 
 def process_match(config, team_div, team_name, next_match_schedule):
@@ -80,14 +81,17 @@ def main():
     team_name = "Hat Trick Swayzes"
     config_filename = 'config.yml'
     config = load_config(config_filename)
-    match_schedule = get_match_schedule(config, team_div, team_name)  #Get schedule from xs
+    #Get schedule from xs
+    match_schedule = get_match_schedule(config, team_div, team_name)  
     input_date = datetime.today().strftime('%Y%m%d')
     dates = []
+    #Find next match in schedule
     for row in match_schedule:
         dates.append(row[4])
     results = [d for d in sorted(dates) if d > input_date]
     next_match_date = results[0] if results else None 
     answer = input("Next match for %s %s: %s Continue? "%(team_name,team_div, datetime.strptime(next_match_date,'%Y%m%d').strftime("%a %b %d")))
+    #If confirmed process match from schedule
     if answer.lower() in ["y","yes"]:
         for row in match_schedule:
             if row[4] == next_match_date:
@@ -101,5 +105,5 @@ def main():
              
 if __name__ == "__main__":
     main()
-     while(True):
-        pass 
+    #while(True):
+    #    pass 

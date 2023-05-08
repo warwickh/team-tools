@@ -2,6 +2,7 @@ config.yml
 *.dat
 *.txt
 *.csv
+!requirements.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

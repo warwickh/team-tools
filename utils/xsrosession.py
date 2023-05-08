@@ -2,8 +2,8 @@
 """
 Extract game schedule from hockeysyte for loading into BenchApp
 season code is unique for season and division 
-e.g. 113 is B3 winter 2023
-https://icehq.hockeysyte.com/games/113
+e.g. 125 is B3 winter 2023
+https://icehq.hockeysyte.com/games/125
 
 """
 import requests 
@@ -182,3 +182,15 @@ class XSROSession:
             if(current_row[2] == my_team_name or current_row[3] == my_team_name):
                 rows.append(current_row + [season_code, team_code])
         return rows
+        
+    def create_ba_schedule_upload(self, season_code, team_code):
+        ba_sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location"]
+        current_season_name = self.get_season_name(season_code)
+        my_team_name = self.get_team_name(season_code, team_code)
+        schedule = self.load_season_schedule(season_code, team_code)
+        out_file_name = "%s_%s.csv"%(my_team_name.replace(" ","_"),current_season_name.replace(" ","_"))
+        with open(out_file_name, 'w', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=',')
+            filewriter.writerow(ba_sched_headers)
+            for row in schedule:
+                filewriter.writerow(row[0:8])
