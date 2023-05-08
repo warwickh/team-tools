@@ -1,10 +1,6 @@
-ba_default_team: ''
 ba_login:
   email: ''
   password: ''
-ba_teams:
 xs_login:
   password: ''
   username: ''
-xs_headless: False
-debug: False

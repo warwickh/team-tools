@@ -64,18 +64,6 @@ class XSROSession:
         clean_time_string = raw_time_string.split("-")[0].strip()
         return clean_time_string
         
-    def get_row_small_match(self, match, year):
-        def_type = "GAME"
-        def_game_type = "REGULAR"
-        def_duration = "1:00"
-        def_location = "ICEHQ"
-        date = self.process_date(match.find("h4").text, year)
-        time = self.process_time(match.find("p").text)
-        home_team = match.find_all("div", {"class": "text-center"})[0].find("div").text
-        away_team = match.find_all("div", {"class": "text-center"})[2].find("div").text
-        game_code = match.find_all("a", href=True)[0]['href'].split("/")[-1]
-        return [def_type, def_game_type, home_team, away_team, date, time, def_duration, def_location, game_code]
-
     def get_season_name(self, season_code):
         sched_url = "%sgames/%s"%(self.baseUrl,season_code)
         page_soup = self.get_page_soup(sched_url)
@@ -164,9 +152,21 @@ class XSROSession:
         print('You picked: ' + team_options[int(user_input) - 1])
         #print(team_options[int(user_input) - 1])
         return team_options[int(user_input) - 1]
+
+    def get_row_small_match(self, match, year):
+        def_type = "GAME"
+        def_game_type = "REGULAR"
+        def_duration = "1:00"
+        def_location = "ICEHQ"
+        date = self.process_date(match.find("h4").text, year)
+        time = self.process_time(match.find("p").text)
+        home_team = match.find_all("div", {"class": "text-center"})[0].find("div").text
+        away_team = match.find_all("div", {"class": "text-center"})[2].find("div").text
+        game_code = match.find_all("a", href=True)[0]['href'].split("/")[-1]
+        return [def_type, def_game_type, home_team, away_team, date, time, def_duration, def_location, game_code]
         
     def load_season_schedule(self, season_code, team_code):
-        sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location", "Game Code"]
+        sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location", "Season Code", "Team Code", "Game Code"]
         rows = []
         sched_url = "%sgames/%s"%(self.baseUrl,season_code)
         page_soup = self.get_page_soup(sched_url)
@@ -180,5 +180,5 @@ class XSROSession:
         for match in my_small_matches:
             current_row = self.get_row_small_match(match, current_year)
             if(current_row[2] == my_team_name or current_row[3] == my_team_name):
-                rows.append(current_row)
+                rows.append(current_row + [season_code, team_code])
         return rows
