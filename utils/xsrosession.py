@@ -176,7 +176,7 @@ class XSROSession:
         #print(my_team_name)
         current_year = self.get_year_from_season(current_season_name)
         my_small_matches = self.get_small_matches(page_soup)
-        #rows.append(sched_headers)
+        rows.append(sched_headers)
         for match in my_small_matches:
             current_row = self.get_row_small_match(match, current_year)
             if(current_row[2] == my_team_name or current_row[3] == my_team_name):
@@ -184,13 +184,13 @@ class XSROSession:
         return rows
         
     def create_ba_schedule_upload(self, season_code, team_code):
-        ba_sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location"]
+        #ba_sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location"]
         current_season_name = self.get_season_name(season_code)
         my_team_name = self.get_team_name(season_code, team_code)
         schedule = self.load_season_schedule(season_code, team_code)
         out_file_name = "%s_%s.csv"%(my_team_name.replace(" ","_"),current_season_name.replace(" ","_"))
         with open(out_file_name, 'w', newline='') as csvfile:
             filewriter = csv.writer(csvfile, delimiter=',')
-            filewriter.writerow(ba_sched_headers)
+            #filewriter.writerow(ba_sched_headers)
             for row in schedule:
                 filewriter.writerow(row[0:8])
