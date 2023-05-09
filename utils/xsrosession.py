@@ -176,7 +176,7 @@ class XSROSession:
         #print(my_team_name)
         current_year = self.get_year_from_season(current_season_name)
         my_small_matches = self.get_small_matches(page_soup)
-        rows.append(sched_headers)
+        #rows.append(sched_headers)
         for match in my_small_matches:
             current_row = self.get_row_small_match(match, current_year)
             if(current_row[2] == my_team_name or current_row[3] == my_team_name):
