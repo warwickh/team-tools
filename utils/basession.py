@@ -206,7 +206,7 @@ class BenchappSession:
         if self.is_match(event_soup):
             return self.process_match(event_soup, team)
             
-    def select_default_team(self):
+    def select_team(self):
         team_options = []
         for team in self.myTeams:
             team_options.append(team.strip())

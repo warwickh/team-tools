@@ -122,7 +122,7 @@ class XSROSession:
         for season in seasons:
             season_options.append(season.text.strip())
             season_paths.append(season['href'])
-        print(season_options)
+        #print(season_options)
         user_input = ''
         input_message = "Pick an option:\n"
         for index, item in enumerate(season_options):
@@ -131,17 +131,18 @@ class XSROSession:
         while user_input not in map(str, range(1, len(season_options) + 1)):
             user_input = input(input_message)
         print('You picked: ' + season_options[int(user_input) - 1])
-        #print(season_paths[int(user_input) - 1].split("/")[-1])
-        return season_paths[int(user_input) - 1].split("/")[-1]
+        #return season_paths[int(user_input) - 1].split("/")[-1]
+        return season_options[int(user_input) - 1].split("-")[0].split("Pool ")[-1].strip()
 
     def select_team(self, season_code):
         team_options = []
         season_url = "%sseason/%s"%(self.baseUrl, season_code)
-        page_soup = self.get_page_soup(url)
+        #print(season_url)
+        page_soup = self.get_page_soup(season_url)
         teams = self.get_teams(page_soup)
         for team in teams:
             team_options.append(team.text.strip())
-        print(team_options)
+        #print(team_options)
         user_input = ''
         input_message = "Pick an option:\n"
         for index, item in enumerate(team_options):
