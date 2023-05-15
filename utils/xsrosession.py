@@ -165,7 +165,20 @@ class XSROSession:
         away_team = match.find_all("div", {"class": "text-center"})[2].find("div").text
         game_code = match.find_all("a", href=True)[0]['href'].split("/")[-1]
         return [def_type, def_game_type, home_team, away_team, date, time, def_duration, def_location, game_code]
-        
+
+    def check_invites_sent(self, match_code): #todo login required
+        matchup_url = "%smatchup/%s"%(self.baseUrl, match_code)
+        page_soup = self.get_page_soup(matchup_url)
+        #invite_buttons = self.driver.find_elements(By.XPATH, '//a[contains(@href, "/pickup/send_invite/")]')
+        print(soup)
+        invite_buttons = page_soup.find_all("a", href=re.compile("/pickup/send_invite/"))
+        print(invite_buttons)
+        print(len(invite_buttons))
+        if len(invite_buttons)>1:
+            return False
+        else:
+            return True        
+
     def load_season_schedule(self, season_code, team_code):
         sched_headers = ["Type", "Game Type", "Home", "Away", "Date", "Time", "Duration", "Location", "Season Code", "Team Code", "Game Code"]
         rows = []

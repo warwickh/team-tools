@@ -40,8 +40,13 @@ def get_match_schedule(xsro_session, season_name, team_name):
     #print(schedule)
     return schedule
 
-def process_match(ba_session, xsrw_session, team_div, team_name, next_match_schedule):
+def process_match(config, team_div, team_name, next_match_schedule):
     print(next_match_schedule)
+    ba_email = config["ba_login"]["email"]
+    ba_password = config["ba_login"]["password"]
+    ba_session = basession.BenchappSession(ba_email, ba_password)
+    xs_username = config["xs_login"]["username"]
+    xs_password = config["xs_login"]["password"]
     ba_team_name = "%s %s"%(team_name, team_div)
     checkins = ba_session.get_next_game_att(ba_team_name)
     print(checkins)
@@ -49,32 +54,37 @@ def process_match(ba_session, xsrw_session, team_div, team_name, next_match_sche
     season_code = next_match_schedule[9]
     team_code = next_match_schedule[10]
     xs_match_date = next_match_schedule[4]
-    print("Processing check-ins for %s %s %s"%(match_code, season_code, team_code))
-    xsrw_session.load_team(season_code, team_code)
-    if xsrw_session.check_invites_sent(team_code) is True:
-        for player in checkins[1:]:
-            print(player)
-            player_name = player[3]
-            player_status = player[6]
-            ba_match_date = player[2]
-            print("Check if dates match %s %s"%(xs_match_date, ba_match_date))
-            if xs_match_date == ba_match_date:
-                print("Processing check-ins for %s %s %s %s"%(player_name, xs_match_date, match_code, player_status))
-                xsrw_session.check_in_player(player_name, match_code, player_status) 
-            else:
-                print("Dates don't match %s %s"%(xs_match_date, ba_match_date))
+    xsrw_session = xsrwsession.XSRWSession(xs_username, xs_password, headless=False, team_code=team_code, season_code=season_code,debug = True)
+    if xsrw_session.check_invites_sent(match_code) is False:
+        print("Invites not sent...")
+        answer = input("Send invites now for match %s on %s? "%(match_code, xs_match_date))
+        if answer.lower() in ["y","yes"]:
+            print("Sending invites for match %s"%match_code)
+            xsrw.send_invites_for_match(match_code) 
+        elif answer.lower() in ["n","no"]:
+            print("Cannot continue without invites")
+            return
     else:
-        print("Invites not sent for match %s on %s. Please send before checking in"%(match_code, xs_match_date))
-        #xsrw.send_invites_for_match(match_code)
+        print("Invites have already been sent...")
+    print("Processing check-ins for %s %s %s"%(match_code, season_code, team_code))
+    for player in checkins[1:]:
+        print(player)
+        player_name = player[3]
+        player_status = player[6]
+        ba_match_date = player[2]
+        print("Check if dates match %s %s"%(xs_match_date, ba_match_date))
+        if xs_match_date == ba_match_date:
+            print("Processing check-ins for %s %s %s %s"%(player_name, xs_match_date, match_code, player_status))
+            xsrw_session.check_in_player(player_name, match_code, player_status) 
+        else:
+            print("Dates don't match %s %s"%(xs_match_date, ba_match_date))
+    return True
     
 def main():
     team_div = ""
     team_name = ""
     config_filename = 'config.yml'
     config = load_config(config_filename)
-    ba_email = config["ba_login"]["email"]
-    ba_password = config["ba_login"]["password"]
-    ba_session = basession.BenchappSession(ba_email, ba_password)
     xs_username = config["xs_login"]["username"]
     xs_password = config["xs_login"]["password"]
     xsro_session = xsrosession.XSROSession(xs_username, xs_password, login=False, debug=False)
@@ -90,15 +100,15 @@ def main():
         dates.append(row[4])
     results = [d for d in sorted(dates) if d > input_date]
     next_match_date = results[0] if results else None 
+
     answer = input("Next match for %s %s: %s Continue? "%(team_name,team_div, datetime.strptime(next_match_date,'%Y%m%d').strftime("%a %b %d")))
     #If confirmed process match from schedule
     if answer.lower() in ["y","yes"]:
-        xsrw_session = xsrwsession.XSRWSession(xs_username, xs_password, headless=False, debug = True)
         for row in match_schedule:
             if row[4] == next_match_date:
                 next_match_schedule = row
                 break
-        process_match(ba_session, xsrw_session, team_div, team_name, next_match_schedule)# Do stuff
+        process_match(config, team_div, team_name, next_match_schedule)
     elif answer.lower() in ["n","no"]:
         print("Cancelling")
     else:

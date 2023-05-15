@@ -48,6 +48,8 @@ class XSRWSession:
     
     def team_loaded(self):
         return_val = True
+        if self.team_code is None:
+            return False
         if int(self.team_code) not in range(1, 10000):
             print("Invalid team code: %s"%self.team_code)
             return_val = False
